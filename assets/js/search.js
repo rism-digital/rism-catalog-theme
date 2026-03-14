@@ -1,6 +1,3 @@
-// Define class for the Object returned by Lunr
-export class LunrResult {
-}
 // Define class for the document structure
 export class Document {
 }
@@ -22,12 +19,6 @@ let facetTemplate = document.querySelector("#facet-template");
 let paginationDiv = document.querySelector("#pagination");
 let paginationTemplate = document.querySelector("#pagination-template");
 let form = document.querySelector("#search-form");
-// A lookup table of the indexed documents
-let documentLookup = {};
-// Function to get document by ID using the lookup table
-function getDocumentById(id) {
-    return documentLookup[id];
-}
 // Function to paginate results
 function paginateResults(results, page = 1, resultsPerPage = 10) {
     const paginatedResults = new PaginatedResults();
@@ -88,7 +79,7 @@ function renderResults(paginatedResults) {
         }
         else
             keyMode.style.display = 'none';
-        if (doc.textIncipit !== undefined) {
+        if (doc.textIncipit !== null) {
             instr.innerHTML = doc.textIncipit.join(", ").substring(0, 200) + '...';
         }
         else
@@ -167,7 +158,7 @@ function filterResults(results, filterOptions) {
     // Apply manual filtering based on filterOptions
     if (filterOptions.keyMode) {
         results = results.filter(function (doc) {
-            return doc.scoringSummary.includes(filterOptions.keyMode);
+            return doc.keyMode === filterOptions.keyMode;
         });
     }
     return results;
@@ -178,45 +169,46 @@ Promise.all([
 ])
     .then(([keyModeData, documents]) => {
     keyModeMap = keyModeData;
-    documents.forEach(doc => {
-        documentLookup[doc.id] = doc;
+    const idx = new FlexSearch.Document({
+        document: {
+            id: 'id',
+            index: ['title', 'catalogNumber', 'scoringSummary', 'keyMode', 'textIncipit']
+        }
     });
-    // Create the lunr index
-    const idx = lunr(function () {
-        this.field('title');
-        this.ref('id');
-        this.field('catalogNumber');
-        this.field('scoringSummary');
-        this.field('keyMode');
-        this.field('incipitText');
-        documents.forEach(doc => {
-            this.add(doc);
-        });
+    documents.forEach(doc => {
+        idx.add(Object.assign(Object.assign({}, doc), { textIncipit: (doc.textIncipit || []).join(" ") }));
     });
     let page = 1;
-    const query = [];
     const appliedInstr = [];
+    let searchQuery = "";
+    let filterOptions = new CustomFilter();
     // Parse the URL parameters
     const params = new URLSearchParams(document.location.search.substring(1));
     params.forEach((value, key) => {
         if (key === 'q' && value !== "") {
             document.getElementById("website-search").value = value;
-            query.push("+" + value);
+            searchQuery = value;
         }
         else if (key === 'keyMode') {
-            query.push("+keyMode:" + value);
+            filterOptions.keyMode = value;
             appliedInstr.push(value);
         }
         else if (key === "page") {
             page = parseInt(value);
         }
     });
-    let idxResults = idx.search(query.join(" "));
-    // Map results to the original documents
-    let searchResults = idxResults.map(function (result) {
-        return getDocumentById(result.ref);
-    });
-    let filterOptions = new CustomFilter();
+    let searchResults = [];
+    if (searchQuery !== "") {
+        const matchedIds = new Set();
+        const idxResults = idx.search(searchQuery, { enrich: true, limit: 10000 });
+        idxResults.forEach(result => {
+            result.result.forEach((id) => matchedIds.add(id));
+        });
+        searchResults = documents.filter(doc => matchedIds.has(doc.id));
+    }
+    else {
+        searchResults = documents;
+    }
     let filteredResults = filterResults(searchResults, filterOptions);
     // Pagination: Get results for page 1 with 20 results per page
     const resultsPerPage = 20;

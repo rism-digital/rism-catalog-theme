@@ -1,8 +1,3 @@
-// Define class for the Object returned by Lunr
-export class LunrResult {
-    ref: string;
-}
-
 // Define class for the document structure
 export class Document {
     id: string;
@@ -28,9 +23,9 @@ export class CustomFilter {
     keyMode?: string;
 };
 
-// Global for allowing use of lunr included via cdn
+// Global for allowing use of FlexSearch included via cdn
 declare global {
-    const lunr;
+    const FlexSearch: any;
 }
 
 let keyModeMap: Object = undefined;
@@ -47,14 +42,6 @@ let paginationDiv = document.querySelector<HTMLDivElement>("#pagination");
 let paginationTemplate = document.querySelector<HTMLTemplateElement>("#pagination-template");
 
 let form = document.querySelector<HTMLFormElement>("#search-form");
-
-// A lookup table of the indexed documents
-let documentLookup: Record<string, Document> = {};
-
-// Function to get document by ID using the lookup table
-function getDocumentById(id: string): Document | undefined {
-    return documentLookup[id];
-}
 
 // Function to paginate results
 function paginateResults(results: Document[], page = 1, resultsPerPage = 10): PaginatedResults {
@@ -124,7 +111,7 @@ function renderResults(paginatedResults: PaginatedResults) {
             keyMode.innerHTML = (keyModeMap) ? keyModeMap[doc.keyMode] : doc.keyMode;
         }
         else keyMode.style.display = 'none';
-        if (doc.textIncipit !== undefined) {
+        if (doc.textIncipit !== null) {
             instr.innerHTML = doc.textIncipit.join(", ").substring(0, 200) + '...';
         }
         else instr.style.display = 'none';
@@ -218,7 +205,7 @@ function filterResults(results: Document[], filterOptions: CustomFilter): Docume
     // Apply manual filtering based on filterOptions
     if (filterOptions.keyMode) {
         results = results.filter(function (doc) {
-            return doc.scoringSummary.includes(filterOptions.keyMode);
+            return doc.keyMode === filterOptions.keyMode;
         });
     }
 
@@ -232,50 +219,50 @@ Promise.all([
     .then(([keyModeData, documents]) => {
         keyModeMap = keyModeData;
 
-        documents.forEach(doc => {
-            documentLookup[doc.id] = doc;
+        const idx = new FlexSearch.Document({
+            document: {
+                id: 'id',
+                index: ['title', 'catalogNumber', 'scoringSummary', 'keyMode', 'textIncipit']
+            }
         });
-
-        // Create the lunr index
-        const idx = lunr(function () {
-            this.field('title');
-            this.ref('id');
-            this.field('catalogNumber');
-            this.field('scoringSummary');
-            this.field('keyMode');
-            this.field('incipitText');
-
-            documents.forEach(doc => {
-                this.add(doc);
+        documents.forEach(doc => {
+            idx.add({
+                ...doc,
+                textIncipit: (doc.textIncipit || []).join(" ")
             });
         });
 
         let page: number = 1;
-        const query: string[] = [];
         const appliedInstr: string[] = [];
+        let searchQuery: string = "";
+        let filterOptions: CustomFilter = new CustomFilter();
 
         // Parse the URL parameters
         const params = new URLSearchParams(document.location.search.substring(1));
         params.forEach((value, key) => {
             if (key === 'q' && value !== "") {
                 (document.getElementById("website-search") as HTMLInputElement).value = value;
-                query.push("+" + value);
+                searchQuery = value;
             } else if (key === 'keyMode') {
-                query.push("+keyMode:" + value);
+                filterOptions.keyMode = value;
                 appliedInstr.push(value);
             } else if (key === "page") {
                 page = parseInt(value);
             }
         });
 
-        let idxResults: LunrResult[] = idx.search(query.join(" "));
+        let searchResults: Document[] = [];
+        if (searchQuery !== "") {
+            const matchedIds = new Set<string>();
+            const idxResults = idx.search(searchQuery, { enrich: true, limit: 10000 });
+            idxResults.forEach(result => {
+                result.result.forEach((id: string) => matchedIds.add(id));
+            });
+            searchResults = documents.filter(doc => matchedIds.has(doc.id));
+        } else {
+            searchResults = documents;
+        }
 
-        // Map results to the original documents
-        let searchResults: Document[] = idxResults.map(function (result) {
-            return getDocumentById(result.ref);
-        });
-
-        let filterOptions: CustomFilter = new CustomFilter();
         let filteredResults: Document[] = filterResults(searchResults, filterOptions);
 
         // Pagination: Get results for page 1 with 20 results per page

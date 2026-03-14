@@ -5,7 +5,7 @@ A Jekyll theme designed for building work catalogue publication sites for the RI
 It includes:
 - **Jekyll theme gem** to use via `_config.yml`
 - **Multilingual support** via YAML locale files
-- **Built-in search** using Lunr.js for client-side indexing
+- **Built-in search** using FlexSearch for client-side indexing
 - **Configurable footers** for sponsor logos
 - **SCSS variables** for visual customization
 
@@ -99,7 +99,7 @@ The site is also expected to have a `_includes/sidepanels/search.en.md` file wit
 {% include sidepanels/search.html %}
 ``` 
 
-No translation of the search page and the side panel page is required because the `search-lunr.html` page looks at the `site.active_lang` value.
+No translation of the search page and the side panel page is required because the search page looks at the `site.active_lang` value.
 
 ### Internationalization
 
@@ -123,4 +123,3 @@ When your theme is released, only the files in `_layouts`, `_includes`, `_sass` 
 ## License
 
 The theme is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
-
