@@ -23,6 +23,15 @@ export class CustomFilter {
     keyMode?: string;
 };
 
+type FacetName = keyof CustomFilter;
+
+type FacetConfig = {
+    name: FacetName;
+    field: keyof Document;
+    container: HTMLDivElement;
+    labels?: () => Object;
+};
+
 // Global for allowing use of FlexSearch included via cdn
 declare global {
     const FlexSearch: any;
@@ -42,6 +51,34 @@ let paginationDiv = document.querySelector<HTMLDivElement>("#pagination");
 let paginationTemplate = document.querySelector<HTMLTemplateElement>("#pagination-template");
 
 let form = document.querySelector<HTMLFormElement>("#search-form");
+let excludedFacets = new Set<string>();
+const excludedFacetsRaw = form?.dataset.excludedFacets || "[]";
+try {
+    const parsed = JSON.parse(excludedFacetsRaw);
+    if (Array.isArray(parsed)) {
+        excludedFacets = new Set(
+            parsed
+                .map(v => String(v).trim())
+                .filter(v => v !== "")
+        );
+    }
+} catch {
+    // Backward-compatibility for older CSV data-excluded-facets values.
+    excludedFacets = new Set(
+        excludedFacetsRaw
+            .split(",")
+            .map(v => v.trim())
+            .filter(v => v !== "")
+    );
+}
+const facetConfigs: FacetConfig[] = [
+    {
+        name: "keyMode",
+        field: "keyMode",
+        container: facetsDiv1,
+        labels: () => keyModeMap
+    }
+];
 
 // Function to paginate results
 function paginateResults(results: Document[], page = 1, resultsPerPage = 10): PaginatedResults {
@@ -146,6 +183,7 @@ function createFacetOption(facet: string, facetName: string, facetLabel: string,
 
 // Function to render the facet
 function renderFacet(div: HTMLDivElement, facets: Record<string, number>, facetName: string, applied: string[], labelMap: Object = undefined) {
+    if (!div) return;
     div.innerHTML = '';
 
     for (const facet in facets) {
@@ -201,13 +239,11 @@ function renderPagination(paginatedResults: PaginatedResults) {
 
 // Function to apply a custom filter 
 function filterResults(results: Document[], filterOptions: CustomFilter): Document[] {
-
-    // Apply manual filtering based on filterOptions
-    if (filterOptions.keyMode) {
-        results = results.filter(function (doc) {
-            return doc.keyMode === filterOptions.keyMode;
-        });
-    }
+    facetConfigs.forEach(facet => {
+        const value = (filterOptions as any)[facet.name];
+        if (!value) return;
+        results = results.filter((doc) => (doc as any)[facet.field] === value);
+    });
 
     return results;
 }
@@ -233,7 +269,7 @@ Promise.all([
         });
 
         let page: number = 1;
-        const appliedInstr: string[] = [];
+        const appliedFacetValues: Partial<Record<FacetName, string[]>> = {};
         let searchQuery: string = "";
         let filterOptions: CustomFilter = new CustomFilter();
 
@@ -243,11 +279,14 @@ Promise.all([
             if (key === 'q' && value !== "") {
                 (document.getElementById("website-search") as HTMLInputElement).value = value;
                 searchQuery = value;
-            } else if (key === 'keyMode') {
-                filterOptions.keyMode = value;
-                appliedInstr.push(value);
             } else if (key === "page") {
                 page = parseInt(value);
+            } else {
+                const facet = facetConfigs.find(f => f.name === key);
+                if (facet && !excludedFacets.has(facet.name)) {
+                    (filterOptions as any)[facet.name] = value;
+                    appliedFacetValues[facet.name] = [value];
+                }
             }
         });
 
@@ -272,7 +311,16 @@ Promise.all([
         renderResults(paginatedResults);
         renderPagination(paginatedResults);
 
-        const categoryFacets: Record<string, number> = aggregateFacets(filteredResults, 'keyMode');
-        renderFacet(facetsDiv1, categoryFacets, 'keyMode', appliedInstr, keyModeMap);
+        facetConfigs.forEach(facet => {
+            if (excludedFacets.has(facet.name)) return;
+            const categoryFacets: Record<string, number> = aggregateFacets(filteredResults, facet.field);
+            renderFacet(
+                facet.container,
+                categoryFacets,
+                facet.name,
+                appliedFacetValues[facet.name] || [],
+                facet.labels ? facet.labels() : undefined
+            );
+        });
     })
     .catch(error => console.error("Error loading data:", error));

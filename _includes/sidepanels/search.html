@@ -1,11 +1,13 @@
 {% assign search_title = site.data.locales | where: "id", "search-title" | first %}
 {% assign search_input = site.data.locales | where: "id", "search-input" | first %}
 {% assign search_facet1 = site.data.locales | where: "id", "search-facet1" | first %}
+{% assign facet_config = site.data.search_config %}
+{% assign excluded_facets = facet_config.exclude | default: empty %}
 
 <h1>{{ search_title.name[site.active_lang] }}</h1>
 <div id="website-search-form">
     {% assign action = "search.html"  %}
-    <form id="search-form" action="{{ action }}">
+    <form id="search-form" action="{{ action }}" data-excluded-facets='{{ excluded_facets | jsonify }}'>
         <div class="field">
             <div class="control">
                 <input id="website-search" class="input is-small" type="text" name="q" placeholder="{{ search_input.name[site.active_lang] }} ... ">
@@ -18,9 +20,11 @@
             </span>
         </button>
 
+        {% unless excluded_facets contains "keyMode" %}
         <h2 class="mt-3">{{ search_facet1.name[site.active_lang] }}</h2>
 
         <div id="facet1" class="mt-2 scroll-facet"></div>
+        {% endunless %}
 
     </form>
 </div>

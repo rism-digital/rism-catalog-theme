@@ -19,6 +19,31 @@ let facetTemplate = document.querySelector("#facet-template");
 let paginationDiv = document.querySelector("#pagination");
 let paginationTemplate = document.querySelector("#pagination-template");
 let form = document.querySelector("#search-form");
+let excludedFacets = new Set();
+const excludedFacetsRaw = (form === null || form === void 0 ? void 0 : form.dataset.excludedFacets) || "[]";
+try {
+    const parsed = JSON.parse(excludedFacetsRaw);
+    if (Array.isArray(parsed)) {
+        excludedFacets = new Set(parsed
+            .map(v => String(v).trim())
+            .filter(v => v !== ""));
+    }
+}
+catch (_a) {
+    // Backward-compatibility for older CSV data-excluded-facets values.
+    excludedFacets = new Set(excludedFacetsRaw
+        .split(",")
+        .map(v => v.trim())
+        .filter(v => v !== ""));
+}
+const facetConfigs = [
+    {
+        name: "keyMode",
+        field: "keyMode",
+        container: facetsDiv1,
+        labels: () => keyModeMap
+    }
+];
 // Function to paginate results
 function paginateResults(results, page = 1, resultsPerPage = 10) {
     const paginatedResults = new PaginatedResults();
@@ -109,6 +134,8 @@ function createFacetOption(facet, facetName, facetLabel, checked) {
 }
 // Function to render the facet
 function renderFacet(div, facets, facetName, applied, labelMap = undefined) {
+    if (!div)
+        return;
     div.innerHTML = '';
     for (const facet in facets) {
         let label = (labelMap) ? labelMap[facet] : facet;
@@ -155,12 +182,12 @@ function renderPagination(paginatedResults) {
 }
 // Function to apply a custom filter 
 function filterResults(results, filterOptions) {
-    // Apply manual filtering based on filterOptions
-    if (filterOptions.keyMode) {
-        results = results.filter(function (doc) {
-            return doc.keyMode === filterOptions.keyMode;
-        });
-    }
+    facetConfigs.forEach(facet => {
+        const value = filterOptions[facet.name];
+        if (!value)
+            return;
+        results = results.filter((doc) => doc[facet.field] === value);
+    });
     return results;
 }
 Promise.all([
@@ -179,7 +206,7 @@ Promise.all([
         idx.add(Object.assign(Object.assign({}, doc), { textIncipit: (doc.textIncipit || []).join(" ") }));
     });
     let page = 1;
-    const appliedInstr = [];
+    const appliedFacetValues = {};
     let searchQuery = "";
     let filterOptions = new CustomFilter();
     // Parse the URL parameters
@@ -189,12 +216,15 @@ Promise.all([
             document.getElementById("website-search").value = value;
             searchQuery = value;
         }
-        else if (key === 'keyMode') {
-            filterOptions.keyMode = value;
-            appliedInstr.push(value);
-        }
         else if (key === "page") {
             page = parseInt(value);
+        }
+        else {
+            const facet = facetConfigs.find(f => f.name === key);
+            if (facet && !excludedFacets.has(facet.name)) {
+                filterOptions[facet.name] = value;
+                appliedFacetValues[facet.name] = [value];
+            }
         }
     });
     let searchResults = [];
@@ -215,8 +245,12 @@ Promise.all([
     const paginatedResults = paginateResults(filteredResults, page, resultsPerPage);
     renderResults(paginatedResults);
     renderPagination(paginatedResults);
-    const categoryFacets = aggregateFacets(filteredResults, 'keyMode');
-    renderFacet(facetsDiv1, categoryFacets, 'keyMode', appliedInstr, keyModeMap);
+    facetConfigs.forEach(facet => {
+        if (excludedFacets.has(facet.name))
+            return;
+        const categoryFacets = aggregateFacets(filteredResults, facet.field);
+        renderFacet(facet.container, categoryFacets, facet.name, appliedFacetValues[facet.name] || [], facet.labels ? facet.labels() : undefined);
+    });
 })
     .catch(error => console.error("Error loading data:", error));
 //# sourceMappingURL=search.js.map

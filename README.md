@@ -78,6 +78,17 @@ The data index for the search is:
 
 The script also populates the `incipits/` directory with an incipit svg file of each work (when available).
 
+### Facet configuration
+
+Facets are shown by default. To exclude one or more facets in a site using this theme, add `_data/search_config.yml`:
+
+```yaml
+exclude:
+  - keyMode
+```
+
+`exclude` is a YAML list of facet keys. If the file is missing, empty, or the list does not contain a facet key, that facet is displayed.
+
 ## Pages and side panel for the search
 
 The search page is expected to have a permalink `/search.html`. A `/search.en.md` file will as simple as:
