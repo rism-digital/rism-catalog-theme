@@ -128,9 +128,11 @@ Label translations for the search are not included in the theme but are expected
 * search-results-count
 * search-no-result
 * search-no-query
-* search-facet1
-* search-facet2
-* search-facet3
+* search-facet-key-mode
+* search-facet-relationship
+* search-facet-subject
+* search-facet-date-from
+* search-facet-date-to
 
 ## Development
 

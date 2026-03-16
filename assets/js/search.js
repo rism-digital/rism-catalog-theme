@@ -13,15 +13,15 @@ let searchResultsDiv = document.querySelector("#search-results");
 let template = document.querySelector("#search-item-template");
 let searchResultsCount = document.querySelector("#search-results-count");
 let searchResultsShow = document.querySelector("#search-results-show");
-let facetKeyMode = document.querySelector("#facet1");
-let facetRelationship = document.querySelector("#facet2");
-let facetSubject = document.querySelector("#facet3");
+let facetKeyMode = document.querySelector("#facet-key-mode");
+let facetRelationship = document.querySelector("#facet-relationship");
+let facetSubject = document.querySelector("#facet-subject");
+let facetDateFromInput = document.querySelector("#facet-date-from");
+let facetDateToInput = document.querySelector("#facet-date-to");
 let facetTemplate = document.querySelector("#facet-template");
 let paginationDiv = document.querySelector("#pagination");
 let paginationTemplate = document.querySelector("#pagination-template");
 let form = document.querySelector("#search-form");
-let dateFromInput = document.querySelector("#date-from");
-let dateToInput = document.querySelector("#date-to");
 let excludedFacets = new Set();
 const excludedFacetsRaw = (form === null || form === void 0 ? void 0 : form.dataset.excludedFacets) || "[]";
 try {
@@ -289,13 +289,13 @@ fetch("./index/index.json").then(r => r.json())
         }
         else if (key === "dateFrom" && !excludedFacets.has("dateRange")) {
             filterOptions.dateFrom = parseYearInput(value);
-            if (dateFromInput)
-                dateFromInput.value = value;
+            if (facetDateFromInput)
+                facetDateFromInput.value = value;
         }
         else if (key === "dateTo" && !excludedFacets.has("dateRange")) {
             filterOptions.dateTo = parseYearInput(value);
-            if (dateToInput)
-                dateToInput.value = value;
+            if (facetDateToInput)
+                facetDateToInput.value = value;
         }
         else {
             const facet = facetConfigs.find(f => f.name === key);
@@ -325,11 +325,11 @@ fetch("./index/index.json").then(r => r.json())
     renderPagination(paginatedResults);
     if (!excludedFacets.has("dateRange")) {
         const dateBounds = computeDateBounds(documents);
-        if (dateFromInput && dateBounds.min !== undefined && !dateFromInput.placeholder) {
-            dateFromInput.placeholder = dateBounds.min.toString();
+        if (facetDateFromInput && dateBounds.min !== undefined && !facetDateFromInput.placeholder) {
+            facetDateFromInput.placeholder = dateBounds.min.toString();
         }
-        if (dateToInput && dateBounds.max !== undefined && !dateToInput.placeholder) {
-            dateToInput.placeholder = dateBounds.max.toString();
+        if (facetDateToInput && dateBounds.max !== undefined && !facetDateToInput.placeholder) {
+            facetDateToInput.placeholder = dateBounds.max.toString();
         }
     }
     facetConfigs.forEach(facet => {
