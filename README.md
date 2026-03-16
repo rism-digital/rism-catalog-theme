@@ -75,6 +75,8 @@ The data index for the search is:
 * the catalog number
 * the key mode
 * the scoring summary
+* earliest date (`work/dates/earliestDate`)
+* latest date (`work/dates/latestDate`)
 
 The script also populates the `incipits/` directory with an incipit svg file of each work (when available).
 
@@ -85,6 +87,7 @@ Facets are shown by default. To exclude one or more facets in a site using this 
 ```yaml
 exclude:
   - keyMode
+  - dateRange
 ```
 
 `exclude` is a YAML list of facet keys. If the file is missing, empty, or the list does not contain a facet key, that facet is displayed.

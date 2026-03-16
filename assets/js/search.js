@@ -19,6 +19,8 @@ let facetTemplate = document.querySelector("#facet-template");
 let paginationDiv = document.querySelector("#pagination");
 let paginationTemplate = document.querySelector("#pagination-template");
 let form = document.querySelector("#search-form");
+let dateFromInput = document.querySelector("#date-from");
+let dateToInput = document.querySelector("#date-to");
 let excludedFacets = new Set();
 const excludedFacetsRaw = (form === null || form === void 0 ? void 0 : form.dataset.excludedFacets) || "[]";
 try {
@@ -188,7 +190,45 @@ function filterResults(results, filterOptions) {
             return;
         results = results.filter((doc) => doc[facet.field] === value);
     });
+    if (!excludedFacets.has("dateRange")) {
+        const from = filterOptions.dateFrom;
+        const to = filterOptions.dateTo;
+        if (from || to) {
+            results = results.filter((doc) => {
+                const docEarliest = doc.earliestDate;
+                const docLatest = doc.latestDate;
+                if (docEarliest === undefined || docLatest === undefined)
+                    return false;
+                if (from && docLatest < from)
+                    return false;
+                if (to && docEarliest > to)
+                    return false;
+                return true;
+            });
+        }
+    }
     return results;
+}
+function parseYearInput(value) {
+    if (!value)
+        return undefined;
+    const match = value.match(/-?\d{1,4}/);
+    if (!match)
+        return undefined;
+    return parseInt(match[0], 10);
+}
+function computeDateBounds(documents) {
+    let min = undefined;
+    let max = undefined;
+    documents.forEach((doc) => {
+        if (doc.earliestDate !== undefined) {
+            min = (min === undefined) ? doc.earliestDate : Math.min(min, doc.earliestDate);
+        }
+        if (doc.latestDate !== undefined) {
+            max = (max === undefined) ? doc.latestDate : Math.max(max, doc.latestDate);
+        }
+    });
+    return { min, max };
 }
 Promise.all([
     fetch("./index/keyMode.json").then(r => r.json()),
@@ -219,6 +259,16 @@ Promise.all([
         else if (key === "page") {
             page = parseInt(value);
         }
+        else if (key === "dateFrom" && !excludedFacets.has("dateRange")) {
+            filterOptions.dateFrom = parseYearInput(value);
+            if (dateFromInput)
+                dateFromInput.value = value;
+        }
+        else if (key === "dateTo" && !excludedFacets.has("dateRange")) {
+            filterOptions.dateTo = parseYearInput(value);
+            if (dateToInput)
+                dateToInput.value = value;
+        }
         else {
             const facet = facetConfigs.find(f => f.name === key);
             if (facet && !excludedFacets.has(facet.name)) {
@@ -245,6 +295,15 @@ Promise.all([
     const paginatedResults = paginateResults(filteredResults, page, resultsPerPage);
     renderResults(paginatedResults);
     renderPagination(paginatedResults);
+    if (!excludedFacets.has("dateRange")) {
+        const dateBounds = computeDateBounds(documents);
+        if (dateFromInput && dateBounds.min !== undefined && !dateFromInput.placeholder) {
+            dateFromInput.placeholder = dateBounds.min.toString();
+        }
+        if (dateToInput && dateBounds.max !== undefined && !dateToInput.placeholder) {
+            dateToInput.placeholder = dateBounds.max.toString();
+        }
+    }
     facetConfigs.forEach(facet => {
         if (excludedFacets.has(facet.name))
             return;

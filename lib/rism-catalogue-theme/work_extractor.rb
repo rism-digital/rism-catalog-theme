@@ -19,6 +19,10 @@ module Jekyll
         doc["catalogNumber"] = primary["workNumber"] if primary
         doc["keyMode"] = key_mode_facet if key_mode_facet
         doc["incipit"] = incipit_filename if incipit_svg
+        earliest_date = extracted_year(@work.dig("dates", "earliestDate"))
+        latest_date = extracted_year(@work.dig("dates", "latestDate"))
+        doc["earliestDate"] = earliest_date if earliest_date
+        doc["latestDate"] = latest_date if latest_date
         doc
       end
 
@@ -111,6 +115,39 @@ module Jekyll
         end
 
         nil
+      end
+
+      def extracted_year(value)
+        case value
+        when Integer
+          value
+        when Float
+          value.to_i
+        when String
+          match = value.match(/-?\d{1,4}/)
+          match ? match[0].to_i : nil
+        when Array
+          value.each do |entry|
+            year = extracted_year(entry)
+            return year if year
+          end
+          nil
+        when Hash
+          preferred_keys = ["value", "@value", "none", "en", "id", "earliestDate", "latestDate"]
+          preferred_keys.each do |key|
+            next unless value.key?(key)
+            year = extracted_year(value[key])
+            return year if year
+          end
+
+          value.each_value do |entry|
+            year = extracted_year(entry)
+            return year if year
+          end
+          nil
+        else
+          nil
+        end
       end
     end
   end

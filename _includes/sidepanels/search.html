@@ -26,5 +26,17 @@
         <div id="facet1" class="mt-2 scroll-facet"></div>
         {% endunless %}
 
+        {% unless excluded_facets contains "dateRange" %}
+        <h2 class="mt-3">Date range</h2>
+        <div class="field is-grouped mt-2">
+            <div class="control is-expanded">
+                <input id="date-from" class="input is-small" type="text" name="dateFrom" inputmode="numeric">
+            </div>
+            <div class="control is-expanded">
+                <input id="date-to" class="input is-small" type="text" name="dateTo" inputmode="numeric">
+            </div>
+        </div>
+        {% endunless %}
+
     </form>
 </div>
