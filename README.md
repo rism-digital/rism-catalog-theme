@@ -74,7 +74,7 @@ The data index for the search is:
 * the incipit text(s)
 * the catalog number
 * the key mode
-* the relationships (`relationships/items/relatedTo`)
+* the relationship (`relationships/items/relatedTo`)
 * the subject (`formOfWork/items`)
 * the scoring summary
 * earliest date (`work/dates/earliestDate`)
@@ -89,7 +89,7 @@ Facets are shown by default. To exclude one or more facets in a site using this 
 ```yaml
 exclude:
   - keyMode
-  - relationships
+  - relationship
   - subject
   - dateRange
 ```

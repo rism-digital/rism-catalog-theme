@@ -20,7 +20,7 @@ module Jekyll
         key_mode_value = key_mode
         doc["keyMode"] = key_mode_value.rstrip if key_mode_value
         relationship_values = relationships
-        doc["relationships"] = relationship_values if relationship_values && !relationship_values.empty?
+        doc["relationship"] = relationship_values if relationship_values && !relationship_values.empty?
         subject_values = subjects
         doc["subject"] = subject_values if subject_values && !subject_values.empty?
         doc["incipit"] = incipit_filename if incipit_svg

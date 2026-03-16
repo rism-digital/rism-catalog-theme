@@ -4,7 +4,7 @@ export class Document {
     title: string;
     catalogNumber?: string;
     keyMode?: string;
-    relationships?: string[];
+    relationship?: string[];
     subject?: string[];
     earliestDate?: number;
     latestDate?: number;
@@ -25,7 +25,7 @@ export class PaginatedResults {
 // Define the filter options interface
 export class CustomFilter {
     keyMode?: string;
-    relationships?: string;
+    relationship?: string;
     subject?: string;
     dateFrom?: number;
     dateTo?: number;
@@ -50,7 +50,7 @@ let searchResultsCount = document.querySelector<HTMLSpanElement>("#search-result
 let searchResultsShow = document.querySelector<HTMLSpanElement>("#search-results-show");
 
 let facetKeyMode = document.querySelector<HTMLDivElement>("#facet1");
-let facetRelationships = document.querySelector<HTMLDivElement>("#facet2");
+let facetRelationship = document.querySelector<HTMLDivElement>("#facet2");
 let facetSubject = document.querySelector<HTMLDivElement>("#facet3");
 let facetTemplate = document.querySelector<HTMLTemplateElement>("#facet-template");
 
@@ -87,9 +87,9 @@ const facetConfigs: FacetConfig[] = [
         container: facetKeyMode
     },
     {
-        name: "relationships",
-        field: "relationships",
-        container: facetRelationships
+        name: "relationship",
+        field: "relationship",
+        container: facetRelationship
     },
     {
         name: "subject",
@@ -317,13 +317,13 @@ fetch("./index/index.json").then(r => r.json())
         const idx = new FlexSearch.Document({
             document: {
                 id: 'id',
-                index: ['title', 'catalogNumber', 'scoringSummary', 'keyMode', 'relationships', 'subject', 'textIncipit']
+                index: ['title', 'catalogNumber', 'scoringSummary', 'keyMode', 'relationship', 'subject', 'textIncipit']
             }
         });
         documents.forEach(doc => {
             idx.add({
                 ...doc,
-                relationships: (doc.relationships || []).join(" "),
+                relationship: (doc.relationship || []).join(" "),
                 subject: (doc.subject || []).join(" "),
                 textIncipit: (doc.textIncipit || []).join(" ")
             });

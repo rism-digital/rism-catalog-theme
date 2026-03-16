@@ -28,8 +28,8 @@
         <div id="facet1" class="mt-2 scroll-facet"></div>
         {% endunless %}
 
-        {% unless excluded_facets contains "relationships" %}
-        <h2 class="mt-3">{{ search_facet2.name[site.active_lang] | default: "Relationships" }}</h2>
+        {% unless excluded_facets contains "relationship" %}
+        <h2 class="mt-3">{{ search_facet2.name[site.active_lang] | default: "Relationship" }}</h2>
 
         <div id="facet2" class="mt-2 scroll-facet"></div>
         {% endunless %}
