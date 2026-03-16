@@ -216,6 +216,14 @@ function renderFacet(div: HTMLDivElement, facets: Record<string, number>, facetN
         a.localeCompare(b, undefined, { sensitivity: "base" })
     );
 
+    if (sortedFacets.length === 0) {
+        const empty = document.createElement("div");
+        empty.textContent = "∅";
+        empty.classList.add("facet-empty");
+        div.appendChild(empty);
+        return;
+    }
+
     for (const facet of sortedFacets) {
         const option = createFacetOption(facet, facetName, facet, facets[facet], applied.includes(facet));
         div.appendChild(option);
