@@ -130,11 +130,20 @@ function renderResults(paginatedResults) {
     });
 }
 // Function to create a facet option node
-function createFacetOption(facet, facetName, facetLabel, checked) {
+function createFacetOption(facet, facetName, facetLabel, facetCount, checked) {
     const option = document.importNode(facetTemplate.content, true);
     const label = option.querySelector("label.checkbox span");
     const input = option.querySelector("input");
-    label.innerHTML = facetLabel;
+    const labelText = document.createElement("span");
+    const countText = document.createElement("span");
+    label.classList.add("facet-option");
+    labelText.classList.add("facet-option-label");
+    countText.classList.add("facet-option-count");
+    labelText.textContent = facetLabel;
+    countText.textContent = `(${facetCount})`;
+    label.innerHTML = "";
+    label.appendChild(labelText);
+    label.appendChild(countText);
     input.setAttribute("name", facetName);
     input.setAttribute("value", facet);
     if (checked) {
@@ -151,7 +160,7 @@ function renderFacet(div, facets, facetName, applied) {
     div.innerHTML = '';
     const sortedFacets = Object.keys(facets).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
     for (const facet of sortedFacets) {
-        const option = createFacetOption(facet, facetName, `${facet} (${facets[facet]})`, applied.includes(facet));
+        const option = createFacetOption(facet, facetName, facet, facets[facet], applied.includes(facet));
         div.appendChild(option);
     }
 }

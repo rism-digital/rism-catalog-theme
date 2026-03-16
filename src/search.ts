@@ -179,12 +179,21 @@ function renderResults(paginatedResults: PaginatedResults) {
 }
 
 // Function to create a facet option node
-function createFacetOption(facet: string, facetName: string, facetLabel: string, checked: boolean) {
+function createFacetOption(facet: string, facetName: string, facetLabel: string, facetCount: number, checked: boolean) {
     const option = document.importNode(facetTemplate.content, true);
     const label = option.querySelector<HTMLLabelElement>("label.checkbox span");
     const input = option.querySelector<HTMLInputElement>("input");
+    const labelText = document.createElement("span");
+    const countText = document.createElement("span");
 
-    label.innerHTML = facetLabel;
+    label.classList.add("facet-option");
+    labelText.classList.add("facet-option-label");
+    countText.classList.add("facet-option-count");
+    labelText.textContent = facetLabel;
+    countText.textContent = `(${facetCount})`;
+    label.innerHTML = "";
+    label.appendChild(labelText);
+    label.appendChild(countText);
     input.setAttribute("name", facetName);
     input.setAttribute("value", facet);
 
@@ -208,7 +217,7 @@ function renderFacet(div: HTMLDivElement, facets: Record<string, number>, facetN
     );
 
     for (const facet of sortedFacets) {
-        const option = createFacetOption(facet, facetName, `${facet} (${facets[facet]})`, applied.includes(facet));
+        const option = createFacetOption(facet, facetName, facet, facets[facet], applied.includes(facet));
         div.appendChild(option);
     }
 }

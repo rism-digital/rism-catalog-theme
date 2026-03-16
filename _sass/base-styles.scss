@@ -87,3 +87,29 @@ div.float-right {
     background-color: $primary;
   }
 }
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.facet-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  min-width: 0;
+  gap: 0.5rem;
+}
+
+.facet-option-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.facet-option-count {
+  margin-left: auto;
+  white-space: nowrap;
+  text-align: right;
+}
