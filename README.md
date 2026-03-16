@@ -75,6 +75,7 @@ The data index for the search is:
 * the catalog number
 * the key mode
 * the relationships (`relationships/items/relatedTo`)
+* the subject (`formOfWork/items`)
 * the scoring summary
 * earliest date (`work/dates/earliestDate`)
 * latest date (`work/dates/latestDate`)
@@ -89,6 +90,7 @@ Facets are shown by default. To exclude one or more facets in a site using this 
 exclude:
   - keyMode
   - relationships
+  - subject
   - dateRange
 ```
 
@@ -127,6 +129,8 @@ Label translations for the search are not included in the theme but are expected
 * search-no-result
 * search-no-query
 * search-facet1
+* search-facet2
+* search-facet3
 
 ## Development
 

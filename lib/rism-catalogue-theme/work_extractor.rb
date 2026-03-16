@@ -21,6 +21,8 @@ module Jekyll
         doc["keyMode"] = key_mode_value.rstrip if key_mode_value
         relationship_values = relationships
         doc["relationships"] = relationship_values if relationship_values && !relationship_values.empty?
+        subject_values = subjects
+        doc["subject"] = subject_values if subject_values && !subject_values.empty?
         doc["incipit"] = incipit_filename if incipit_svg
         earliest_date = extracted_year(@work.dig("dates", "earliestDate"))
         latest_date = extracted_year(@work.dig("dates", "latestDate"))
@@ -56,6 +58,19 @@ module Jekyll
           values.concat(related_to_values(item["relatedTo"]))
         end
 
+        values = values
+          .map { |value| value.to_s.strip }
+          .reject(&:empty?)
+          .uniq
+
+        values.empty? ? nil : values
+      end
+
+      def subjects
+        items = @work.dig("formOfWork", "items")
+        return nil unless items.is_a?(Array)
+
+        values = items.flat_map { |item| subject_values(item) }
         values = values
           .map { |value| value.to_s.strip }
           .reject(&:empty?)
@@ -174,6 +189,23 @@ module Jekyll
                   value.dig("label", "none", 0) ||
                   value["id"] ||
                   value["name"]
+          label ? [label] : []
+        else
+          []
+        end
+      end
+
+      def subject_values(value)
+        case value
+        when String
+          [value]
+        when Array
+          value.flat_map { |entry| subject_values(entry) }
+        when Hash
+          label = value.dig("label", @lang, 0) ||
+                  value.dig("label", "none", 0) ||
+                  value["name"] ||
+                  value["id"]
           label ? [label] : []
         else
           []

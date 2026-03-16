@@ -15,6 +15,7 @@ let searchResultsCount = document.querySelector("#search-results-count");
 let searchResultsShow = document.querySelector("#search-results-show");
 let facetKeyMode = document.querySelector("#facet1");
 let facetRelationships = document.querySelector("#facet2");
+let facetSubject = document.querySelector("#facet3");
 let facetTemplate = document.querySelector("#facet-template");
 let paginationDiv = document.querySelector("#pagination");
 let paginationTemplate = document.querySelector("#pagination-template");
@@ -48,6 +49,11 @@ const facetConfigs = [
         name: "relationships",
         field: "relationships",
         container: facetRelationships
+    },
+    {
+        name: "subject",
+        field: "subject",
+        container: facetSubject
     }
 ];
 // Function to paginate results
@@ -245,11 +251,11 @@ fetch("./index/index.json").then(r => r.json())
     const idx = new FlexSearch.Document({
         document: {
             id: 'id',
-            index: ['title', 'catalogNumber', 'scoringSummary', 'keyMode', 'relationships', 'textIncipit']
+            index: ['title', 'catalogNumber', 'scoringSummary', 'keyMode', 'relationships', 'subject', 'textIncipit']
         }
     });
     documents.forEach(doc => {
-        idx.add(Object.assign(Object.assign({}, doc), { relationships: (doc.relationships || []).join(" "), textIncipit: (doc.textIncipit || []).join(" ") }));
+        idx.add(Object.assign(Object.assign({}, doc), { relationships: (doc.relationships || []).join(" "), subject: (doc.subject || []).join(" "), textIncipit: (doc.textIncipit || []).join(" ") }));
     });
     let page = 1;
     const appliedFacetValues = {};

@@ -5,6 +5,7 @@ export class Document {
     catalogNumber?: string;
     keyMode?: string;
     relationships?: string[];
+    subject?: string[];
     earliestDate?: number;
     latestDate?: number;
     scoringSummary?: string;
@@ -25,6 +26,7 @@ export class PaginatedResults {
 export class CustomFilter {
     keyMode?: string;
     relationships?: string;
+    subject?: string;
     dateFrom?: number;
     dateTo?: number;
 };
@@ -49,6 +51,7 @@ let searchResultsShow = document.querySelector<HTMLSpanElement>("#search-results
 
 let facetKeyMode = document.querySelector<HTMLDivElement>("#facet1");
 let facetRelationships = document.querySelector<HTMLDivElement>("#facet2");
+let facetSubject = document.querySelector<HTMLDivElement>("#facet3");
 let facetTemplate = document.querySelector<HTMLTemplateElement>("#facet-template");
 
 let paginationDiv = document.querySelector<HTMLDivElement>("#pagination");
@@ -87,6 +90,11 @@ const facetConfigs: FacetConfig[] = [
         name: "relationships",
         field: "relationships",
         container: facetRelationships
+    },
+    {
+        name: "subject",
+        field: "subject",
+        container: facetSubject
     }
 ];
 
@@ -309,13 +317,14 @@ fetch("./index/index.json").then(r => r.json())
         const idx = new FlexSearch.Document({
             document: {
                 id: 'id',
-                index: ['title', 'catalogNumber', 'scoringSummary', 'keyMode', 'relationships', 'textIncipit']
+                index: ['title', 'catalogNumber', 'scoringSummary', 'keyMode', 'relationships', 'subject', 'textIncipit']
             }
         });
         documents.forEach(doc => {
             idx.add({
                 ...doc,
                 relationships: (doc.relationships || []).join(" "),
+                subject: (doc.subject || []).join(" "),
                 textIncipit: (doc.textIncipit || []).join(" ")
             });
         });
