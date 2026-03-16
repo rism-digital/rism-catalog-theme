@@ -4,6 +4,7 @@ export class Document {
     title: string;
     catalogNumber?: string;
     keyMode?: string;
+    relationships?: string[];
     earliestDate?: number;
     latestDate?: number;
     scoringSummary?: string;
@@ -23,6 +24,7 @@ export class PaginatedResults {
 // Define the filter options interface
 export class CustomFilter {
     keyMode?: string;
+    relationships?: string;
     dateFrom?: number;
     dateTo?: number;
 };
@@ -33,7 +35,6 @@ type FacetConfig = {
     name: FacetName;
     field: keyof Document;
     container: HTMLDivElement;
-    labels?: () => Object;
 };
 
 // Global for allowing use of FlexSearch included via cdn
@@ -41,14 +42,13 @@ declare global {
     const FlexSearch: any;
 }
 
-let keyModeMap: Object = undefined;
-
 let searchResultsDiv = document.querySelector<HTMLDivElement>("#search-results");
 let template = document.querySelector<HTMLTemplateElement>("#search-item-template");
 let searchResultsCount = document.querySelector<HTMLSpanElement>("#search-results-count");
 let searchResultsShow = document.querySelector<HTMLSpanElement>("#search-results-show");
 
-let facetsDiv1 = document.querySelector<HTMLDivElement>("#facet1");
+let facetKeyMode = document.querySelector<HTMLDivElement>("#facet1");
+let facetRelationships = document.querySelector<HTMLDivElement>("#facet2");
 let facetTemplate = document.querySelector<HTMLTemplateElement>("#facet-template");
 
 let paginationDiv = document.querySelector<HTMLDivElement>("#pagination");
@@ -81,8 +81,12 @@ const facetConfigs: FacetConfig[] = [
     {
         name: "keyMode",
         field: "keyMode",
-        container: facetsDiv1,
-        labels: () => keyModeMap
+        container: facetKeyMode
+    },
+    {
+        name: "relationships",
+        field: "relationships",
+        container: facetRelationships
     }
 ];
 
@@ -151,13 +155,12 @@ function renderResults(paginatedResults: PaginatedResults) {
         title.appendChild(div);
         addTextOrHide(doc.scoringSummary, scoringSummary);
         if (doc.keyMode) {
-            keyMode.innerHTML = (keyModeMap) ? keyModeMap[doc.keyMode] : doc.keyMode;
+            keyMode.innerHTML = doc.keyMode;
         }
         else keyMode.style.display = 'none';
-        if (doc.textIncipit !== null) {
+        if (Array.isArray(doc.textIncipit) && doc.textIncipit.length > 0) {
             instr.innerHTML = doc.textIncipit.join(", ").substring(0, 200) + '...';
-        }
-        else instr.style.display = 'none';
+        } else instr.style.display = 'none';
         if (doc.incipit !== undefined) {
             incipit.setAttribute("src", "./incipits/" + doc.incipit + ".svg");
         }
@@ -188,13 +191,16 @@ function createFacetOption(facet: string, facetName: string, facetLabel: string,
 }
 
 // Function to render the facet
-function renderFacet(div: HTMLDivElement, facets: Record<string, number>, facetName: string, applied: string[], labelMap: Object = undefined) {
+function renderFacet(div: HTMLDivElement, facets: Record<string, number>, facetName: string, applied: string[]) {
     if (!div) return;
     div.innerHTML = '';
 
-    for (const facet in facets) {
-        let label = (labelMap) ? labelMap[facet] : facet;
-        const option = createFacetOption(facet, facetName, `${label} (${facets[facet]})`, applied.includes(facet));
+    const sortedFacets = Object.keys(facets).sort((a, b) =>
+        a.localeCompare(b, undefined, { sensitivity: "base" })
+    );
+
+    for (const facet of sortedFacets) {
+        const option = createFacetOption(facet, facetName, `${facet} (${facets[facet]})`, applied.includes(facet));
         div.appendChild(option);
     }
 }
@@ -248,7 +254,13 @@ function filterResults(results: Document[], filterOptions: CustomFilter): Docume
     facetConfigs.forEach(facet => {
         const value = (filterOptions as any)[facet.name];
         if (!value) return;
-        results = results.filter((doc) => (doc as any)[facet.field] === value);
+        results = results.filter((doc) => {
+            const fieldValue = (doc as any)[facet.field];
+            if (Array.isArray(fieldValue)) {
+                return fieldValue.includes(value);
+            }
+            return fieldValue === value;
+        });
     });
 
     if (!excludedFacets.has("dateRange")) {
@@ -292,22 +304,18 @@ function computeDateBounds(documents: Document[]): { min?: number, max?: number 
     return { min, max };
 }
 
-Promise.all([
-    fetch("./index/keyMode.json").then(r => r.json()),
-    fetch("./index/index.json").then(r => r.json())
-])
-    .then(([keyModeData, documents]) => {
-        keyModeMap = keyModeData;
-
+fetch("./index/index.json").then(r => r.json())
+    .then((documents) => {
         const idx = new FlexSearch.Document({
             document: {
                 id: 'id',
-                index: ['title', 'catalogNumber', 'scoringSummary', 'keyMode', 'textIncipit']
+                index: ['title', 'catalogNumber', 'scoringSummary', 'keyMode', 'relationships', 'textIncipit']
             }
         });
         documents.forEach(doc => {
             idx.add({
                 ...doc,
+                relationships: (doc.relationships || []).join(" "),
                 textIncipit: (doc.textIncipit || []).join(" ")
             });
         });
@@ -378,8 +386,7 @@ Promise.all([
                 facet.container,
                 categoryFacets,
                 facet.name,
-                appliedFacetValues[facet.name] || [],
-                facet.labels ? facet.labels() : undefined
+                appliedFacetValues[facet.name] || []
             );
         });
     })

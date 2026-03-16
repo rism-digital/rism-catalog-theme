@@ -17,7 +17,10 @@ module Jekyll
 
         primary = primary_part
         doc["catalogNumber"] = primary["workNumber"] if primary
-        doc["keyMode"] = key_mode_facet if key_mode_facet
+        key_mode_value = key_mode
+        doc["keyMode"] = key_mode_value.rstrip if key_mode_value
+        relationship_values = relationships
+        doc["relationships"] = relationship_values if relationship_values && !relationship_values.empty?
         doc["incipit"] = incipit_filename if incipit_svg
         earliest_date = extracted_year(@work.dig("dates", "earliestDate"))
         latest_date = extracted_year(@work.dig("dates", "latestDate"))
@@ -26,15 +29,8 @@ module Jekyll
         doc
       end
 
-      def key_mode_label
+      def key_mode
         first_value(summary_field("keyMode", "Key or mode"), ["en", "none"])
-      end
-
-      def key_mode_facet
-        label = key_mode_label
-        return nil unless label
-
-        self.class.normalize_facet(label)
       end
 
       def incipit_svg
@@ -50,8 +46,22 @@ module Jekyll
         @work["id"][/([^\/]+)$/]
       end
 
-      def self.normalize_facet(value)
-        value.rstrip.gsub(/[()]/, "").gsub(/[ -]/, "_")
+      def relationships
+        items = @work.dig("relationships", "items")
+        return nil unless items.is_a?(Array)
+
+        values = []
+        items.each do |item|
+          next unless item.is_a?(Hash)
+          values.concat(related_to_values(item["relatedTo"]))
+        end
+
+        values = values
+          .map { |value| value.to_s.strip }
+          .reject(&:empty?)
+          .uniq
+
+        values.empty? ? nil : values
       end
 
       private
@@ -149,6 +159,27 @@ module Jekyll
           nil
         end
       end
+
+      def related_to_values(value)
+        case value
+        when String
+          [value]
+        when Array
+          value.flat_map { |entry| related_to_values(entry) }
+        when Hash
+          type = value["type"] || value["@type"]
+          return [] unless type == "rism:Person"
+
+          label = value.dig("label", @lang, 0) ||
+                  value.dig("label", "none", 0) ||
+                  value["id"] ||
+                  value["name"]
+          label ? [label] : []
+        else
+          []
+        end
+      end
+
     end
   end
 end

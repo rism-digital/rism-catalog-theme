@@ -67,13 +67,14 @@ The indexing of the catalogue is triggered with the theme plugin command:
 bundle exec jekyll load-data
 ```
 
-This generates a `index/index.json` file and an `index/keyMode.json` file. The latter is an example of how to index data for a facet.
+This generates a `index/index.json` file.
 
 The data index for the search is:
 * the label (title)
 * the incipit text(s)
 * the catalog number
 * the key mode
+* the relationships (`relationships/items/relatedTo`)
 * the scoring summary
 * earliest date (`work/dates/earliestDate`)
 * latest date (`work/dates/latestDate`)
@@ -87,6 +88,7 @@ Facets are shown by default. To exclude one or more facets in a site using this 
 ```yaml
 exclude:
   - keyMode
+  - relationships
   - dateRange
 ```
 

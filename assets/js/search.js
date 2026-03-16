@@ -9,12 +9,12 @@ export class PaginatedResults {
 export class CustomFilter {
 }
 ;
-let keyModeMap = undefined;
 let searchResultsDiv = document.querySelector("#search-results");
 let template = document.querySelector("#search-item-template");
 let searchResultsCount = document.querySelector("#search-results-count");
 let searchResultsShow = document.querySelector("#search-results-show");
-let facetsDiv1 = document.querySelector("#facet1");
+let facetKeyMode = document.querySelector("#facet1");
+let facetRelationships = document.querySelector("#facet2");
 let facetTemplate = document.querySelector("#facet-template");
 let paginationDiv = document.querySelector("#pagination");
 let paginationTemplate = document.querySelector("#pagination-template");
@@ -42,8 +42,12 @@ const facetConfigs = [
     {
         name: "keyMode",
         field: "keyMode",
-        container: facetsDiv1,
-        labels: () => keyModeMap
+        container: facetKeyMode
+    },
+    {
+        name: "relationships",
+        field: "relationships",
+        container: facetRelationships
     }
 ];
 // Function to paginate results
@@ -102,11 +106,11 @@ function renderResults(paginatedResults) {
         title.appendChild(div);
         addTextOrHide(doc.scoringSummary, scoringSummary);
         if (doc.keyMode) {
-            keyMode.innerHTML = (keyModeMap) ? keyModeMap[doc.keyMode] : doc.keyMode;
+            keyMode.innerHTML = doc.keyMode;
         }
         else
             keyMode.style.display = 'none';
-        if (doc.textIncipit !== null) {
+        if (Array.isArray(doc.textIncipit) && doc.textIncipit.length > 0) {
             instr.innerHTML = doc.textIncipit.join(", ").substring(0, 200) + '...';
         }
         else
@@ -135,13 +139,13 @@ function createFacetOption(facet, facetName, facetLabel, checked) {
     return option;
 }
 // Function to render the facet
-function renderFacet(div, facets, facetName, applied, labelMap = undefined) {
+function renderFacet(div, facets, facetName, applied) {
     if (!div)
         return;
     div.innerHTML = '';
-    for (const facet in facets) {
-        let label = (labelMap) ? labelMap[facet] : facet;
-        const option = createFacetOption(facet, facetName, `${label} (${facets[facet]})`, applied.includes(facet));
+    const sortedFacets = Object.keys(facets).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+    for (const facet of sortedFacets) {
+        const option = createFacetOption(facet, facetName, `${facet} (${facets[facet]})`, applied.includes(facet));
         div.appendChild(option);
     }
 }
@@ -188,7 +192,13 @@ function filterResults(results, filterOptions) {
         const value = filterOptions[facet.name];
         if (!value)
             return;
-        results = results.filter((doc) => doc[facet.field] === value);
+        results = results.filter((doc) => {
+            const fieldValue = doc[facet.field];
+            if (Array.isArray(fieldValue)) {
+                return fieldValue.includes(value);
+            }
+            return fieldValue === value;
+        });
     });
     if (!excludedFacets.has("dateRange")) {
         const from = filterOptions.dateFrom;
@@ -230,20 +240,16 @@ function computeDateBounds(documents) {
     });
     return { min, max };
 }
-Promise.all([
-    fetch("./index/keyMode.json").then(r => r.json()),
-    fetch("./index/index.json").then(r => r.json())
-])
-    .then(([keyModeData, documents]) => {
-    keyModeMap = keyModeData;
+fetch("./index/index.json").then(r => r.json())
+    .then((documents) => {
     const idx = new FlexSearch.Document({
         document: {
             id: 'id',
-            index: ['title', 'catalogNumber', 'scoringSummary', 'keyMode', 'textIncipit']
+            index: ['title', 'catalogNumber', 'scoringSummary', 'keyMode', 'relationships', 'textIncipit']
         }
     });
     documents.forEach(doc => {
-        idx.add(Object.assign(Object.assign({}, doc), { textIncipit: (doc.textIncipit || []).join(" ") }));
+        idx.add(Object.assign(Object.assign({}, doc), { relationships: (doc.relationships || []).join(" "), textIncipit: (doc.textIncipit || []).join(" ") }));
     });
     let page = 1;
     const appliedFacetValues = {};
@@ -308,7 +314,7 @@ Promise.all([
         if (excludedFacets.has(facet.name))
             return;
         const categoryFacets = aggregateFacets(filteredResults, facet.field);
-        renderFacet(facet.container, categoryFacets, facet.name, appliedFacetValues[facet.name] || [], facet.labels ? facet.labels() : undefined);
+        renderFacet(facet.container, categoryFacets, facet.name, appliedFacetValues[facet.name] || []);
     });
 })
     .catch(error => console.error("Error loading data:", error));

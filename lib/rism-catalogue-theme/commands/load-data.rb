@@ -10,8 +10,6 @@ module Jekyll
   module RismCatalogueTheme
     class LoadData < Command
       @docs = []
-      # the map for index => original instrument values
-      @keyMode_map = {}
 
       def self.init_with_program(prog)
         prog.command("load-data".to_sym) do |c|
@@ -24,7 +22,6 @@ module Jekyll
             Jekyll.logger.info "RISM:", "Running load data..."
 
             @docs = []
-            @keyMode_map = {}
 
             site = Jekyll::Site.new(Jekyll.configuration({}))
             if !site.config["rism_catalogue"]
@@ -41,7 +38,6 @@ module Jekyll
             iterate_paginated_results(start_url)
 
             File.write("index/index.json", @docs.to_json)
-            File.write("index/keyMode.json", @keyMode_map.to_json)
           end
         end
       end
@@ -78,12 +74,6 @@ module Jekyll
       def self.load_json_ld(value)
         extractor = WorkExtractor.new(value)
         doc = extractor.index_doc
-
-        key_mode_label = extractor.key_mode_label
-        key_mode_facet = extractor.key_mode_facet
-        if key_mode_label && key_mode_facet
-          @keyMode_map[key_mode_facet] = key_mode_label.rstrip
-        end
 
         svg_data = extractor.incipit_svg
         if svg_data
