@@ -107,7 +107,7 @@ function renderResults(paginatedResults) {
         const instr = output.querySelector("p.textIncipit");
         const incipit = output.querySelector("img.incipit");
         const div = document.createElement("div");
-        div.innerHTML = doc.title + " – " + doc.catalogNumber;
+        div.innerHTML = doc.title;
         title.setAttribute("href", "./resolve.html?id=" + doc.id.replace(/^https:\/\/rism.online\/(.*)$/i, "rism:$1"));
         title.appendChild(div);
         addTextOrHide(doc.scoringSummary, scoringSummary);

@@ -10,7 +10,7 @@ module Jekyll
       def index_doc
         doc = {
           "id" => @work["id"],
-          "title" => @work.dig("label", "none", 0),
+          "title" => localized_label(@work["label"]),
           "textIncipit" => all_values(summary_field("textIncipit", "Text incipit")),
           "scoringSummary" => first_value(summary_field("scoringSummary", "Scoring summary"))
         }
@@ -32,7 +32,7 @@ module Jekyll
       end
 
       def key_mode
-        first_value(summary_field("keyMode", "Key or mode"), ["en", "none"])
+        first_value(summary_field("keyMode", "Key or mode"))
       end
 
       def incipit_svg
@@ -116,12 +116,12 @@ module Jekyll
         nil
       end
 
-      def first_value(field, preferred_langs = ["none", "en"])
+      def first_value(field, langs = [@lang, "en", "none"])
         return nil unless field.is_a?(Hash)
         value = field["value"]
         return nil unless value.is_a?(Hash)
 
-        preferred_langs.each do |lang|
+        langs.each do |lang|
           vals = value[lang]
           return vals[0] if vals.is_a?(Array) && vals[0]
         end
@@ -129,12 +129,12 @@ module Jekyll
         nil
       end
 
-      def all_values(field, preferred_langs = ["none", "en"])
+      def all_values(field, langs = [@lang, "en", "none"])
         return nil unless field.is_a?(Hash)
         value = field["value"]
         return nil unless value.is_a?(Hash)
 
-        preferred_langs.each do |lang|
+        langs.each do |lang|
           vals = value[lang]
           return vals if vals.is_a?(Array) && !vals.empty?
         end
@@ -175,41 +175,61 @@ module Jekyll
         end
       end
 
-      def related_to_values(value)
+      def related_to_values(value, langs = [@lang, "en", "none"])
         case value
         when String
           [value]
         when Array
-          value.flat_map { |entry| related_to_values(entry) }
+          value.flat_map { |entry| related_to_values(entry, langs) }
         when Hash
           type = value["type"] || value["@type"]
           return [] unless type == "rism:Person"
 
-          label = value.dig("label", @lang, 0) ||
-                  value.dig("label", "none", 0) ||
-                  value["id"] ||
-                  value["name"]
+          label = nil
+          langs.each do |lang|
+            label = value.dig("label", lang, 0)
+            break if label
+          end
+          label ||= value["id"] || value["name"]
           label ? [label] : []
         else
           []
         end
       end
 
-      def subject_values(value)
+      def subject_values(value, langs = [@lang, "en", "none"])
         case value
         when String
           [value]
         when Array
-          value.flat_map { |entry| subject_values(entry) }
+          value.flat_map { |entry| subject_values(entry, langs) }
         when Hash
-          label = value.dig("label", @lang, 0) ||
-                  value.dig("label", "none", 0) ||
-                  value["name"] ||
-                  value["id"]
+          label = nil
+          langs.each do |lang|
+            label = value.dig("label", lang, 0)
+            break if label
+          end
+          label ||= value["name"] || value["id"]
           label ? [label] : []
         else
           []
         end
+      end
+
+      def localized_label(value, langs = [@lang, "en", "none"])
+        return value if value.is_a?(String)
+        return nil unless value.is_a?(Hash)
+
+        langs.each do |lang|
+          vals = value[lang]
+          return vals[0] if vals.is_a?(Array) && vals[0]
+        end
+
+        value.each_value do |vals|
+          return vals[0] if vals.is_a?(Array) && vals[0]
+        end
+
+        nil
       end
 
     end
