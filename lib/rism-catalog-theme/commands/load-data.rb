@@ -7,14 +7,14 @@ require "fileutils"
 require_relative "../work_extractor"
 
 module Jekyll
-  module RismCatalogueTheme
+  module RismCatalogTheme
     class LoadData < Command
       @docs = []
 
       def self.init_with_program(prog)
         prog.command("load-data".to_sym) do |c|
           c.syntax "jekyll load data"
-          c.description "Runs the RISM Catalogue Theme helper script."
+          c.description "Runs the RISM Catalog Theme helper script."
 
           c.option "verbose", "--verbose", "Show more output"
 
@@ -24,12 +24,12 @@ module Jekyll
             @docs = []
 
             site = Jekyll::Site.new(Jekyll.configuration({}))
-            if !site.config["rism_catalogue"]
-              Jekyll.logger.error "rism_catalogue is missing in the configuration"
+            if !site.config["rism_catalog"]
+              Jekyll.logger.error "rism_catalog is missing in the configuration"
               exit
             end
 
-            start_url = "https://rism.online/#{site.config["rism_catalogue"]}/works"
+            start_url = "https://rism.online/#{site.config["rism_catalog"]}/works"
 
             FileUtils.mkdir_p("index")
             FileUtils.mkdir_p("incipits")

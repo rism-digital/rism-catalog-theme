@@ -1,10 +1,10 @@
 Gem::Specification.new do |spec|
-  spec.name          = "rism-catalogue-theme"
-  spec.version       = "1.1.1"
+  spec.name          = "rism-catalog-theme"
+  spec.version       = "1.2.0"
   spec.authors       = ["Rodolfo Zitellini", "Andrew Hankinson", "Laurent Pugin"]
   spec.email         = ["rodolfo.zitellini@rism.digital", "andrew.hankinson@rism.digital", "laurent.pugin@rism.digital"]
 
-  spec.summary       = "Shared theme for RISM work catalogues websites."
+  spec.summary       = "Shared theme for RISM work catalogs websites."
   spec.homepage      = "http://rism.digital"
   spec.license       = "MIT"
 

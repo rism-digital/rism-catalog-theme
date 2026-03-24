@@ -1,5 +1,5 @@
 module Jekyll
-  module RismCatalogueTheme
+  module RismCatalogTheme
     class WorkExtractor
       def initialize(work, lang = "en")
         @work = work

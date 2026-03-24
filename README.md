@@ -1,6 +1,6 @@
-# Jekyll theme for RISM catalogues
+# Jekyll theme for RISM catalogs
 
-A Jekyll theme designed for building work catalogue publication sites for the RISM
+A Jekyll theme designed for building work catalog publication sites for the RISM
 
 It includes:
 - **Jekyll theme gem** to use via `_config.yml`
@@ -17,7 +17,7 @@ Add this to the Jekyll site's `Gemfile`:
 
 ```ruby
 group :jekyll_plugins do
-  gem "rism-catalogue-theme", git: 'https://github.com/rism-digital/rism-catalogue-theme'
+  gem "rism-catalog-theme", git: 'https://github.com/rism-digital/rism-catalog-theme'
   gem "jekyll-rism-online-renderer", git: 'https://github.com/rism-digital/rism-online-renderer'  
   gem "jekyll-polyglot"
 end
@@ -26,7 +26,7 @@ end
 And add this line to `_config.yml`:
 
 ```yaml
-theme: rism-catalogue-theme
+theme: rism-catalog-theme
 ```
 
 And then execute:
@@ -39,7 +39,7 @@ bundle install
 
 If the site will not be accessible under the root or the domain, you need to add a `baseurl` in `_config.yaml, (e.g.):
 ```yaml
-baseurl: "/catalogue-name"
+baseurl: "/catalog-name"
 ```
 
 The footer can be configured to display sponsors. For example:
@@ -56,12 +56,12 @@ Logo images have to be placed in `./images/footer`
 
 ## RISM Online works
 
-The work catalogue has to be specified in `_config.yml` with the corresponding RISM Online publication ID, (e.g.):
+The work catalog has to be specified in `_config.yml` with the corresponding RISM Online publication ID, (e.g.):
 ```yaml
-rism_catalogue: "publications/30025296"
+rism_catalog: "publications/30025296"
 ```
 
-The indexing of the catalogue is triggered with the theme plugin command:
+The indexing of the catalog is triggered with the theme plugin command:
 
 ```bash
 bundle exec jekyll load-data

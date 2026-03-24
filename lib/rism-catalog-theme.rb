@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 require "jekyll"
-require "rism-catalogue-theme/version"
+require "rism-catalog-theme/version"
 
 # Load the theme as a Jekyll plugin
-require "rism-catalogue-theme/commands/load-data"
+require "rism-catalog-theme/commands/load-data"
 
 # If your theme also ships templates, make it register as a theme:
 Jekyll::Hooks.register :site, :after_init do |site|
